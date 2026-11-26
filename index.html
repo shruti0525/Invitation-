@@ -382,27 +382,7 @@
       }
     }
 
-    /* =====================================================
-       AUDIO BUTTON
-    ===================================================== */
-    #audio-btn {
-      position: fixed; top: 1rem; right: 1rem; z-index: 1010;
-      display: none; align-items: center; gap: 0.4rem;
-      background: rgba(255,255,255,0.92);
-      border: 1px solid var(--gold-400);
-      border-radius: var(--radius-pill);
-      padding: 0.45rem 0.95rem;
-      font-family: var(--font-serif);
-      font-size: 0.62rem; letter-spacing: 2px;
-      color: var(--gold-700);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-    #audio-btn.vis { display: flex !important; }
-    #audio-btn:active { transform: scale(0.95); }
-    #audio-btn:hover { background: rgba(255,255,255,0.98); box-shadow: 0 4px 20px rgba(184,134,11,0.22); transform: scale(1.03); }
+    /* Audio button removed per user request */
 
     /* =====================================================
        MAIN CONTENT WRAPPER
@@ -1065,11 +1045,11 @@
 <!-- PETALS -->
 <div id="petals-wrap"></div>
 
-<!-- AUDIO BUTTON -->
-<button id="audio-btn" aria-label="Toggle music" onclick="toggleAudio()">
-  <span id="audio-icon">🔊</span>
-  <span id="audio-label">MUSIC</span>
-</button>
+<!-- BACKGROUND AUDIO (PLAYS AFTER OPENING ENVELOPE) -->
+<audio id="bg-audio" preload="auto" loop playsinline>
+  <source src="assets/music/the-warmth-that-stayed.mp3" type="audio/mpeg" />
+  <source src="assets/music/soft-tune.mp3" type="audio/mpeg" />
+</audio>
 
 <!-- ═══════════════════════════════════════════════════════════
      MAIN CONTENT
@@ -1315,8 +1295,6 @@ function openEnvelope() {
 
   // Start background wedding music immediately on user tap!
   playAudio();
-  const btn = document.getElementById('audio-btn');
-  if (btn) btn.classList.add('vis');
 
   // After flap animation, cross-fade to blessing
   setTimeout(() => {
@@ -1339,7 +1317,6 @@ function revealMain() {
   const wrap = document.getElementById('main-wrap');
   wrap.removeAttribute('aria-hidden');
   wrap.classList.add('vis');
-  document.getElementById('audio-btn').classList.add('vis');
 
   initScratchCard();
   initScrollFade();
@@ -1588,73 +1565,29 @@ function initScrollFade() {
 }
 
 /* ──────────────────────────────────────────────────────────
-   BACKGROUND WEDDING INSTRUMENTAL MUSIC (SOFT TUNE)
+   BACKGROUND WEDDING INSTRUMENTAL MUSIC (PLAYS AFTER OPENING)
 ────────────────────────────────────────────────────────── */
-const bgAudio = new Audio('assets/music/soft-tune.mp3');
-bgAudio.loop = true;
-bgAudio.preload = 'auto';
-
-let muted = true;
-
-// Ensure UI updates on play/pause
-bgAudio.addEventListener('play', updateAudioUI);
-bgAudio.addEventListener('pause', updateAudioUI);
+let audioStarted = false;
 
 function playAudio() {
-  muted = false;
-  const btn = document.getElementById('audio-btn');
-  if (btn) btn.classList.add('vis');
-  
-  bgAudio.play().then(function() {
-    updateAudioUI();
-  }).catch(function(err) {
-    console.log('Audio playback waiting for interaction:', err);
-    muted = true;
-    updateAudioUI();
-  });
-}
-
-function toggleAudio(e) {
-  if (e) {
-    e.stopPropagation();
-    e.preventDefault();
-  }
-  const btn = document.getElementById('audio-btn');
-  if (btn) btn.classList.add('vis');
-
-  if (bgAudio.paused || muted) {
-    muted = false;
-    bgAudio.play().then(function() {
-      updateAudioUI();
+  if (audioStarted) return;
+  const audio = document.getElementById('bg-audio');
+  if (audio) {
+    audio.play().then(function() {
+      audioStarted = true;
     }).catch(function(err) {
-      console.log('Playback error:', err);
-      muted = true;
-      updateAudioUI();
+      console.log('Audio playback info:', err);
     });
-  } else {
-    muted = true;
-    bgAudio.pause();
-    updateAudioUI();
   }
 }
 
-function updateAudioUI() {
-  const isPlaying = !bgAudio.paused && !muted;
-  const icon = document.getElementById('audio-icon');
-  const label = document.getElementById('audio-label');
-  if (icon) icon.textContent = isPlaying ? '🔊' : '🔇';
-  if (label) label.textContent = isPlaying ? 'MUTE' : 'MUSIC';
-  const btn = document.getElementById('audio-btn');
-  if (btn) btn.classList.add('vis');
-}
-
-window.addEventListener('DOMContentLoaded', function() {
-  const btn = document.getElementById('audio-btn');
-  if (btn) {
-    btn.addEventListener('click', toggleAudio);
-    btn.addEventListener('touchend', toggleAudio);
-  }
-});
+// Fallback: Ensure audio starts on first user touch/click anywhere if not already playing
+document.addEventListener('click', function() {
+  playAudio();
+}, { once: true });
+document.addEventListener('touchend', function() {
+  playAudio();
+}, { once: true });
 
 </script>
 
